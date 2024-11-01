@@ -6,3 +6,5 @@ venv/
 env/
 instance/
 *.sqlite3
+instance/afrotour.db
+.DS_Store

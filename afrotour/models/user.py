@@ -4,11 +4,12 @@ from sqlalchemy.sql import func
 from afrotour import db
 from datetime import datetime
 
+
 class User(db.Model):
     """
     Model for user in the Afrotour app.
     """
-    id = db.Column(db.Integer, primary_key=True)  # Fix: Changed from db.Integerr to db.Integer
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
     password_hash = db.Column(db.String(150), nullable=False)

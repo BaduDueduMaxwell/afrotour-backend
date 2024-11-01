@@ -2,7 +2,7 @@ from flask import Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate  
 from afrotour.models import User
-
+from afrotour.models import Tour
 
 def create_app():
     app = Flask(__name__)
