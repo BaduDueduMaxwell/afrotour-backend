@@ -31,3 +31,15 @@ class User(db.Model):
         Verifies the user's password.
         """
         return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        """
+        Converts the User instance to a dictionary for JSON serialization.
+        """
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "is_admin": self.is_admin,
+            "created_at": self.created_at,
+        }

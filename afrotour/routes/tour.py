@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from afrotour.models import Tour
 from afrotour import db
+from afrotour.helpers.admin_required_helper import admin_required_helper
+
 
 tour = Blueprint('tour', __name__)
 
@@ -50,26 +52,6 @@ def get_tours():
     })
 
 
-def to_dict(self):
-    """
-    Convert the Tour instance into a dictionary format for JSON serialization.
-
-    Returns:
-    A dictionary representation of the Tour instance.
-    """
-    return {
-        "id": self.id,
-        "name": self.name,
-        "description": self.description,
-        "category": self.category,
-        "price": self.price,
-        "start_date": self.start_date.isoformat(),
-        "end_date": self.end_date.isoformat(),
-        "images": self.images.split(',') if self.images else [],
-        "itinerary": self.itinerary
-    }
-
-Tour.to_dict = to_dict  # Attach the method to the Tour model
 
 
 @tour.route('/search', methods=['GET'])
@@ -112,6 +94,7 @@ def get_tour(id):
 
 
 @tour.route('/tours', methods=['POST'])
+@admin_required_helper
 def add_tour():
     """
     Add a new tour to the database
@@ -141,3 +124,34 @@ def add_tour():
     db.session.add(new_tour)
     db.session.commit()
     return jsonify(new_tour.to_dict()), 201
+
+
+@tour.route('/<int:d>', methods=['PUT'])
+@admin_required_helper
+def update_tour(id):
+    """
+    Admin updates tour by id to the database
+    """
+    data = request.get_json()
+    tour = Tour.query.get_or_404(id)
+
+    tour.name = data.get('name', tour.name)
+    tour.description = data.get('description', tour.description)
+    tour.category = data.get('category', tour.category)
+    tour.price = data.get('price', tour.price)
+    tour.start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d') if data.get('start_date') else tour.start_date
+    tour.end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d') if data.get('end_date') else tour.end_date
+    tour.images = ','.join(data.get('images', [])) if data.get('images') else tour.images
+    tour.itinerary = data.get('itinerary', tour.itinerary)
+
+    db.session.commit()
+    return jsonify(tour.to_dict()), 200
+
+
+@tour.route('/<int:id>', methods=['DELETE'])
+@admin_required_helper
+def delete_tour(id):
+    tour = Tour.query.get_or_404(id)
+    db.session.delete(tour)
+    db.session.commit()
+    return jsonify({"message": "Tour deleted successfully"}), 200
