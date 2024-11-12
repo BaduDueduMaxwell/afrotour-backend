@@ -29,6 +29,26 @@ class Tour(db.Model):
     reviews = db.relationship('Review', backref='tour', lazy=True)
 
 
+    def to_dict(self):
+        """
+        Convert the Tour instance into a dictionary format for JSON serialization.
+
+        Returns:
+        A dictionary representation of the Tour instance.
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "category": self.category,
+            "price": self.price,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
+            "images": self.images.split(',') if self.images else [],
+            "itinerary": self.itinerary
+        }
+
+
 class Review(db.Model):
     """
     Model for a review in the Afrotour app.
@@ -43,3 +63,4 @@ class Review(db.Model):
     tour_id = db.Column(db.Integer, db.ForeignKey('tour.id'), nullable=False)
     content = db.Column(db.Text)
     rating = db.Column(db.Integer)
+
