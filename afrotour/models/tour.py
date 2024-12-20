@@ -3,7 +3,7 @@ from afrotour import db
 
 class Tour(db.Model):
     """
-    Model for a tour in the Afrotour app.
+    Model for a tour in the afrotour app.
 
     Attributes:
         id (int): The primary key identifier for the tour.
@@ -51,7 +51,7 @@ class Tour(db.Model):
 
 class Review(db.Model):
     """
-    Model for a review in the Afrotour app.
+    Model for a review in the afrotour app.
 
     Attributes:
         id (int): The primary key identifier for the review.

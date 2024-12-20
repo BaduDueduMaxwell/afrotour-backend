@@ -7,8 +7,10 @@ from datetime import datetime
 
 class User(db.Model):
     """
-    Model for user in the Afrotour app.
+    Model for user in the afrotour app.
     """
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
@@ -16,13 +18,14 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=func.now())
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
-    def __init__(self, username, email, password, created_at=None, is_admin=False):
+    def __init__(self, username, email, password_hash=None, created_at=None, is_admin=False):
         """
-        Initializes new user instance with username, email, password.
+        Initializes new user instance with username, email, and password_hash.
         """
         self.username = username
         self.email = email
-        self.password_hash = generate_password_hash(password)
+        if password_hash:
+            self.password_hash = password_hash
         self.created_at = created_at or datetime.utcnow()
         self.is_admin = is_admin
 

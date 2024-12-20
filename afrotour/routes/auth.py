@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from afrotour import db
 from afrotour.models.user import User
+from werkzeug.security import generate_password_hash
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -28,6 +29,7 @@ def validate_user_data(data):
 @auth.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
+    print("Received data:", data)
     error_message = validate_user_data(data)
     if error_message:
         return jsonify({"error": error_message[0]}), error_message[1]
@@ -40,13 +42,23 @@ def register():
     if User.query.filter_by(username=username).first() or User.query.filter_by(email=email).first():
         return jsonify({"message": "User already exists"}), 409
 
-    # Create new user and add to the database
-    new_user = User(username=username, email=email, password=password)
-    db.session.add(new_user)
-    db.session.commit()
+    # Hash the password before storing
+    password_hash = generate_password_hash(password)
 
-    access_token = create_access_token(user_identity={'id': new_user.id, 'username': username, 'email': email})
-    refresh_token = create_refresh_token(user_identity={'id': new_user.id, 'username': username, 'email': email})
+    # Create new user and add to the database
+    new_user = User(username=username, email=email, password_hash=password_hash)
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        print(f"New user created: {new_user.to_dict()}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error during commit: {e}")
+        return jsonify({"message": "Error during user creation"}), 500
+
+    # Generate JWT tokens
+    access_token = create_access_token(identity={'id': new_user.id, 'username': username, 'email': email})
+    refresh_token = create_refresh_token(identity={'id': new_user.id, 'username': username, 'email': email})
     
     return jsonify({
         "message": "User registered successfully",
@@ -67,8 +79,8 @@ def login():
 
     user = User.query.filter_by(username=username).first()
     if user and user.verify_password(password):
-        access_token = create_access_token(user_identity={'id': user.id, 'username': user.username, 'email': user.email})
-        refresh_token = create_refresh_token(user_identity={'id': user.id, 'username': user.username, 'email': user.email})
+        access_token = create_access_token(identity={'id': user.id, 'username': user.username, 'email': user.email})
+        refresh_token = create_refresh_token(identity={'id': user.id, 'username': user.username, 'email': user.email})
         
         return jsonify({
             "message": "Login successful",
@@ -83,8 +95,8 @@ def login():
 @auth.route('/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh():
-    user_identity = get_jwt_identity()
-    new_access_token = create_access_token(user_identity=user_identity)
+    identity = get_jwt_identity()
+    new_access_token = create_access_token(identity=identity)
     return jsonify(access_token=new_access_token), 200
 
 
@@ -92,8 +104,8 @@ def refresh():
 @auth.route('/profile', methods=['PUT'])
 @jwt_required()
 def update_profile():
-    user_identity = get_jwt_identity()
-    user = User.query.get_or_404(user_identity['id'])
+    identity = get_jwt_identity()
+    user = User.query.get_or_404(identity['id'])
     
     data = request.get_json()
     username = data.get('username')
